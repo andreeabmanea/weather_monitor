@@ -1,0 +1,15 @@
+Rainy
+Sunny
+Cloudy
+Snowy
+Thunderstorm
+Partially Cloudy
+Partially Sunny
+Partially Snowy
+Partially Rainy
+Clear
+Windy
+Overcast
+Frost
+Tornado
+Cool

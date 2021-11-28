@@ -3,6 +3,6 @@
 all:
 	gcc server.c -o server
 	gcc client.c -o client
-	gcc conn.c -o conn -lsqlite3
+	gcc utils.c -o utils -lsqlite3 -lcrypt
 clean:
 	rm -f client server
