@@ -1,8 +1,3 @@
-/* cliTCPIt.c - Exemplu de client TCP
-   Trimite un nume la server; primeste de la server "Hello nume".
-         
-   Autor: Lenuta Alboaie  <adria@infoiasi.ro> (c)2009
-*/
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -60,7 +55,10 @@ int main (int argc, char *argv[])
 
   /* citirea mesajului */
   bzero(msg, 100);
-  printf ("[client]Introduceti un nume de fisier:");
+  if (port == 2028) 
+    printf ("[client]Introduceti un mesaj la portul 2028:");
+  else printf("[client]Introduceti un mesaj la portul 2029:");
+  
   fflush (stdout);
   read (0, msg, sizeof(msg));
   
@@ -70,21 +68,4 @@ int main (int argc, char *argv[])
       perror ("[client]Eroare la write() spre server.\n");
       return errno;
     }
-
-  /* citirea raspunsului dat de server 
-     (apel blocant pina cind serverul raspunde) */
-  if (read (sd, msg, 100) < 0)
-    {
-      perror ("[client]Eroare la read() de la server.\n");
-      return errno;
-    }
-  /* afisam mesajul primit */
-  printf ("[client]Mesajul primit este: %s\n", msg);
-  FILE *fPtr;
-  char filePath[100] = "./client_folder/test.txt";
-  fPtr = fopen(filePath, "a");
-  fputs(msg, fPtr);
-
-  /* inchidem conexiunea, am terminat */
-  close (sd);
-}
+  }
