@@ -12,6 +12,24 @@
 /* codul de eroare returnat de anumite apeluri */
 extern int errno;
 
+char* read_string_from_socket(int sd) {
+  int message_length;
+  static char buffer[20];
+
+  read(sd, &message_length, sizeof(int));
+  read(sd, buffer, message_length);
+
+  return buffer;
+}
+
+void write_string_to_socket(int sd, char* message) {
+  if (recv(sd, NULL, 1, MSG_PEEK | MSG_DONTWAIT) != 0) {
+    int message_length= strlen(message) + 1;
+    /* trimiterea mesajului la server */
+    write(sd, &message_length, sizeof(int));
+    write(sd, message, message_length);
+  }
+}
 /* portul de conectare la server*/
 int port;
 
@@ -19,7 +37,6 @@ int main (int argc, char *argv[])
 {
   int sd;			// descriptorul de socket
   struct sockaddr_in server;	// structura folosita pentru conectare 
-  char msg[100];		// mesajul trimis
 
   /* exista toate argumentele in linia de comanda? */
   if (argc != 3)
@@ -54,18 +71,50 @@ int main (int argc, char *argv[])
     }
 
   /* citirea mesajului */
-  bzero(msg, 100);
-  if (port == 2028) 
-    printf ("[client]Introduceti un mesaj la portul 2028:");
-  else printf("[client]Introduceti un mesaj la portul 2029:");
-  
-  fflush (stdout);
-  read (0, msg, sizeof(msg));
-  
-  /* trimiterea mesajului la server */
-  if (write (sd, msg, sizeof(msg)) <= 0)
-    {
-      perror ("[client]Eroare la write() spre server.\n");
-      return errno;
+  switch (port) {
+    case 2028:
+      regular_client(sd);
+      break;
+    case 2029: 
+      special_client();
+      break;
+    default: 
+      printf("Unknown port");
+  }
+  }
+
+  void regular_client(int sd) {
+    while (1) {
+      char city[100];
+      bzero(city, 100);
+      printf("Input a city from Romania \n");
+      fflush(stdout);
+      fflush(stdin);
+      scanf("%s", city);
+      write_string_to_socket(sd, city);
+
+      char calendar_date[100];
+      bzero(calendar_date, 100);
+      printf("Input a date with the format DD/MM/YYYY \n");
+      fflush(stdout);
+      fflush(stdin);
+      scanf("%s", calendar_date);
+      write_string_to_socket(sd, calendar_date);
+
+     // receive meteo info from server
+
+      char exit_msg[2];
+      bzero(exit_msg, 2);
+      printf("Do you wish to disconnect? Types Y/N \n");
+      fflush(stdout);
+      fflush(stdin);
+      scanf("%s", exit_msg);
+      if (strcmp(exit_msg, "Y") == 0) 
+        break;
+      
     }
+  }
+
+  void special_client() {
+
   }

@@ -11,6 +11,23 @@
 #define PORT_1 2028
 #define PORT_2 2029
 
+char* read_string_from_socket(int sd) {
+  int message_length;
+  static char buffer[20];
+
+  read(sd, &message_length, sizeof(int));
+  read(sd, buffer, message_length);
+
+  return buffer;
+}
+
+void write_string_to_socket(int sd, char* message) {
+    int message_length= strlen(message) + 1;
+    /* trimiterea mesajului la server */
+    write(sd, &message_length, sizeof(int));
+    write(sd, message, message_length);
+}
+
 int get_fd_of_accepted_connection(int file_descriptors[], int* which_sd, struct sockaddr *addr, socklen_t *addrlen) {
     
 	int maxfd = -1, fd = -1;
@@ -114,6 +131,38 @@ int init_server(int* first_sd, int* second_sd, struct sockaddr_in server, struct
 	}
 }
 
+void treat_regular_client(int client) {
+
+	int exit = 0;
+	
+	while (1) {
+		if (exit == 0) {
+			char* city;
+			city = read_string_from_socket(client);
+			printf ("[server]Mesajul a fost receptionat...%s\n", city);
+
+			char* calendar_date;
+			calendar_date = read_string_from_socket(client);
+			printf ("[server]Mesajul a fost receptionat...%s\n", calendar_date);
+
+			fflush(stdout);
+			//send from database the requested info
+		
+			char* exit_msg;
+			exit_msg = read_string_from_socket(client);
+			if (strcmp(exit_msg, "Y") == 0) {
+				exit = 1;
+				break;
+			}	
+		}
+		fflush(stdout);
+	}
+}
+
+void treat_special_client() {
+
+}
+
 extern int errno;
 
 int main ()
@@ -125,9 +174,6 @@ int main ()
 	init_server(&first_sd, &second_sd, server, &from);
     
 	int socket_descriptors[] = {first_sd, second_sd};
-    
-	char msg[100];		//mesajul primit de la client
-    char msgrasp[100]=" ";        //mesaj de raspuns pentru client
     
 	fd_set readfds;
     int client;
@@ -165,20 +211,21 @@ int main ()
     		close(first_sd);
 
     		/* s-a realizat conexiunea, se astepta mesajul */
-    		bzero (msg, 100);
+    	
     		printf ("[server]Asteptam mesajul...\n");
     		fflush (stdout);
+			switch (which_sd) {
+				case 3: 
+					treat_regular_client(client);
+					fflush (stdout);
+					break;
+				case 4:
+					treat_special_client();
+					break;
+				default:
+					printf("Socket unknown");
+			}
 
-    		/* citirea mesajului */
-    		if (read (client, msg, 100) <= 0)
-    		{
-    			perror ("[server]Eroare la read() de la client.\n");
-    			close (client);	/* inchidem conexiunea cu clientul */
-    			exit(2);	
-    		}
-
-    		printf ("[server]Mesajul a fost receptionat...%s\n", msg);
-    		close (client);
     		exit(0);
     	}
 
