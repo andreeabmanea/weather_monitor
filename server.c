@@ -13,7 +13,7 @@
 
 char* read_string_from_socket(int sd) {
   int message_length;
-  static char buffer[20];
+  static char buffer[100];
 
   read(sd, &message_length, sizeof(int));
   read(sd, buffer, message_length);
@@ -139,20 +139,21 @@ void treat_regular_client(int client) {
 		if (exit == 0) {
 			char* city;
 			city = read_string_from_socket(client);
-			printf ("[server]Mesajul a fost receptionat...%s\n", city);
+			printf ("[server]1: Mesajul a fost receptionat...%s\n", city);
 
 			char* calendar_date;
 			calendar_date = read_string_from_socket(client);
-			printf ("[server]Mesajul a fost receptionat...%s\n", calendar_date);
+			printf ("[server]2: Mesajul a fost receptionat...%s\n", calendar_date);
 
-			fflush(stdout);
 			//send from database the requested info
 		
 			char* exit_msg;
 			exit_msg = read_string_from_socket(client);
+			printf ("[server]3: Mesajul a fost receptionat...%s\n", exit_msg);
 			if (strcmp(exit_msg, "Y") == 0) {
 				exit = 1;
-				break;
+				sleep(1);
+				close(client);
 			}	
 		}
 		fflush(stdout);

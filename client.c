@@ -14,7 +14,7 @@ extern int errno;
 
 char* read_string_from_socket(int sd) {
   int message_length;
-  static char buffer[20];
+  static char buffer[100];
 
   read(sd, &message_length, sizeof(int));
   read(sd, buffer, message_length);
@@ -103,14 +103,17 @@ int main (int argc, char *argv[])
 
      // receive meteo info from server
 
-      char exit_msg[2];
-      bzero(exit_msg, 2);
+      char exit_msg[100];
+      bzero(exit_msg, 100);
       printf("Do you wish to disconnect? Types Y/N \n");
       fflush(stdout);
       fflush(stdin);
       scanf("%s", exit_msg);
-      if (strcmp(exit_msg, "Y") == 0) 
+      write_string_to_socket(sd, exit_msg);
+      if (strcmp(exit_msg, "Y") == 0) { 
+        close(sd);
         break;
+      }
       
     }
   }
