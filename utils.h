@@ -173,10 +173,45 @@ int validate_weather_status(sqlite3 *db, char *status) {
       result = sqlite3_step(stmt);
     }
    }
+   printf("%s\n", statuses);
    result = sqlite3_finalize(stmt);
    if (strstr(statuses, status) != NULL)
       return 1;
    return 0;
+  }
+
+char* select_weather_forecast(sqlite3 *db, char *city, char *calendar_date) {
+   const char* sql = "SELECT min_temperature, max_temperature, precipitations, fk_status FROM weather_forecast WHERE fk_city = ? and calendar_date = ?";
+   sqlite3_stmt *stmt = NULL;
+   
+   int result = sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
+   sqlite3_bind_text(stmt, 1, city, -1, SQLITE_TRANSIENT);
+   sqlite3_bind_text(stmt, 2, calendar_date, -1, SQLITE_TRANSIENT);
+   if (result != SQLITE_OK) {
+      printf("Prepare for statement failed: %s\n", sqlite3_errmsg(db));
+      return result;
+   }
+   
+ //  sqlite3_bind_text(result, 2, "2021-05-20", -1, SQLITE_TRANSIENT);
+   result = sqlite3_step(stmt);
+   
+   char *statuses; 
+   strcpy(statuses, "");
+
+   int row_count = 0;
+   while(result == SQLITE_ROW) {
+      row_count++;
+      int column_count = sqlite3_column_count(stmt);
+      for (int column = 0; column < column_count; column++) {
+         strcat(statuses, sqlite3_column_text(stmt, column));
+         strcat(statuses, " ");
+         fflush(stdout);
+      }
+      
+      result = sqlite3_step(stmt);
+    }
+   result = sqlite3_finalize(stmt);
+   return statuses;
   }
 
 
@@ -195,29 +230,31 @@ int check_row(char *row_content) {
 
 }
 
-int main() {
-   //printf("%lu", hash("andreea"));
-   // printf("%s\n", crypt("andreea","k7"));
-   // printf("%s", crypt("andreea","a7"));
+// int main() {
+//    //printf("%lu", hash("andreea"));
+//    // printf("%s\n", crypt("andreea","k7"));
+//    // printf("%s", crypt("andreea","a7"));
    
-   sqlite3 *db;
-   char *err_msg = 0;
+//    sqlite3 *db;
+//    char *err_msg = 0;
 
-   int connection;
-   connection = sqlite3_open("weather.db", &db);
-   if(connection) {
-      fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
-      return(0);
-   } 
-      else {
-         fprintf(stderr, "Opened database successfully\n");
-      }
-   // populate_database(db, "database_files/status_for_weather.txt");
-   // process_file_from_client(db, "example.csv");
+//    int connection;
+//    connection = sqlite3_open("weather.db", &db);
+//    if(connection) {
+//       fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
+//       return(0);
+//    } 
+//       else {
+//          fprintf(stderr, "Opened database successfully\n");
+//       }
+//    // populate_database(db, "database_files/status_for_weather.txt");
+//    // process_file_from_client(db, "example.csv");
 
-   // printf("%d", validate_city(db, "Iasi"));
-   // printf("%d", validate_weather_status(db, "Cloudy"));
-}
+//    // printf("%d", validate_city(db, "Iasi"));
+//    // printf("%d", validate_weather_status(db, "Cloudy"));
+//    printf("%s\n",select_weather_forecast(db, "Iasi", "2021-05-20"));
+   
+// }
 
 
 

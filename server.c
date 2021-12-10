@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <sqlite3.h> 
+#include "utils.h"
 
 /* portul folosit */
 #define PORT_1 2028
@@ -131,7 +133,7 @@ int init_server(int* first_sd, int* second_sd, struct sockaddr_in server, struct
 	}
 }
 
-void treat_regular_client(int client) {
+void treat_regular_client(int client, sqlite3 *db) {
 
 	int exit = 0;
 	
@@ -139,11 +141,14 @@ void treat_regular_client(int client) {
 		if (exit == 0) {
 			char* city;
 			city = read_string_from_socket(client);
-			printf ("[server]1: Mesajul a fost receptionat...%s\n", city);
+			printf ("[server]1: Mesajul a fost receptionat...%s.... de la %d\n", city, client);
+
 
 			char* calendar_date;
 			calendar_date = read_string_from_socket(client);
 			printf ("[server]2: Mesajul a fost receptionat...%s\n", calendar_date);
+
+			printf("%s\n", select_weather_forecast(db, city, calendar_date));
 
 			//send from database the requested info
 		
@@ -168,6 +173,18 @@ extern int errno;
 
 int main ()
 {
+	sqlite3 *db;
+	char *err_msg = 0;
+
+	int connection;
+	connection = sqlite3_open("weather.db", &db);
+	if(connection) {
+		fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
+		return(0);
+	} 
+	else {
+		fprintf(stderr, "Opened database successfully\n");
+	}
 	// initialize server
 	int first_sd, second_sd;	
 	struct sockaddr_in server;
@@ -213,14 +230,14 @@ int main ()
 
     		/* s-a realizat conexiunea, se astepta mesajul */
     	
-    		printf ("[server]Asteptam mesajul...\n");
+    		printf ("[server] The client connect at %d...\n", which_sd);
     		fflush (stdout);
 			switch (which_sd) {
-				case 3: 
-					treat_regular_client(client);
+				case 4: 
+					treat_regular_client(client, db);
 					fflush (stdout);
 					break;
-				case 4:
+				case 5:
 					treat_special_client();
 					break;
 				default:
