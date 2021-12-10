@@ -84,7 +84,7 @@ int main (int argc, char *argv[])
   }
 
   void regular_client(int sd) {
-    while (1) {
+    // while (1) {
       char city[100];
       bzero(city, 100);
       printf("Input a city from Romania \n");
@@ -103,19 +103,19 @@ int main (int argc, char *argv[])
 
      // receive meteo info from server
 
-      char exit_msg[100];
-      bzero(exit_msg, 100);
-      printf("Do you wish to disconnect? Types Y/N \n");
-      fflush(stdout);
-      fflush(stdin);
-      scanf("%s", exit_msg);
-      write_string_to_socket(sd, exit_msg);
-      if (strcmp(exit_msg, "Y") == 0) { 
-        close(sd);
-        break;
-      }
+      // char exit_msg[100];
+      // bzero(exit_msg, 100);
+      // printf("Do you wish to disconnect? Types Y/N \n");
+      // fflush(stdout);
+      // fflush(stdin);
+      // scanf("%s", exit_msg);
+      // write_string_to_socket(sd, exit_msg);
+      // if (strcmp(exit_msg, "Y") == 0) { 
+      //   close(sd);
+      //   break;
+      // }
       
-    }
+    // }
   }
 
   void special_client() {

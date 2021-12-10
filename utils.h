@@ -189,10 +189,8 @@ char* select_weather_forecast(sqlite3 *db, char *city, char *calendar_date) {
    sqlite3_bind_text(stmt, 2, calendar_date, -1, SQLITE_TRANSIENT);
    if (result != SQLITE_OK) {
       printf("Prepare for statement failed: %s\n", sqlite3_errmsg(db));
-      return result;
+      return;
    }
-   
- //  sqlite3_bind_text(result, 2, "2021-05-20", -1, SQLITE_TRANSIENT);
    result = sqlite3_step(stmt);
    
    char *statuses; 

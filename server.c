@@ -12,6 +12,8 @@
 /* portul folosit */
 #define PORT_1 2028
 #define PORT_2 2029
+extern int errno;
+sqlite3 *db;
 
 char* read_string_from_socket(int sd) {
   int message_length;
@@ -133,59 +135,56 @@ int init_server(int* first_sd, int* second_sd, struct sockaddr_in server, struct
 	}
 }
 
-void treat_regular_client(int client, sqlite3 *db) {
-
-	int exit = 0;
+void treat_regular_client(int client) {
 	
-	while (1) {
-		if (exit == 0) {
-			char* city;
-			city = read_string_from_socket(client);
-			printf ("[server]1: Mesajul a fost receptionat...%s.... de la %d\n", city, client);
+	char* city;
+	city = read_string_from_socket(client);
+	printf ("[server]1: Mesajul a fost receptionat...%s.... de la %d\n", city, client);
+
+	char* calendar_date;
+	calendar_date = read_string_from_socket(client);
+	printf ("[server]2: Mesajul a fost receptionat...%s\n", calendar_date);
+	printf("Done");
+	printf("%s\n", select_weather_forecast(db, "Iasi", "2021-05-20"));
+	// int exit = 0;
+
+	// while (1) {
+	// 	if (exit == 0) {
+
+	// 		char* city;
+	// 		city = read_string_from_socket(client);
+	// 		printf ("[server]1: Mesajul a fost receptionat...%s.... de la %d\n", city, client);
 
 
-			char* calendar_date;
-			calendar_date = read_string_from_socket(client);
-			printf ("[server]2: Mesajul a fost receptionat...%s\n", calendar_date);
+	// 		char* calendar_date;
+	// 		calendar_date = read_string_from_socket(client);
+	// 		printf ("[server]2: Mesajul a fost receptionat...%s\n", calendar_date);
 
-			printf("%s\n", select_weather_forecast(db, city, calendar_date));
-
-			//send from database the requested info
+	// 		printf("%s\n", select_weather_forecast(db, "Iasi", "2021-05-20"));
+	// 		//send from database the requested info
 		
-			char* exit_msg;
-			exit_msg = read_string_from_socket(client);
-			printf ("[server]3: Mesajul a fost receptionat...%s\n", exit_msg);
-			if (strcmp(exit_msg, "Y") == 0) {
-				exit = 1;
-				sleep(1);
-				close(client);
-			}	
-		}
-		fflush(stdout);
-	}
+	// 		char* exit_msg;
+	// 		exit_msg = read_string_from_socket(client);
+	// 		printf ("[server]3: Mesajul a fost receptionat...%s\n", exit_msg);
+	// 		if (strcmp(exit_msg, "Y") == 0) {
+	// 			exit = 1;
+	// 			close(client);
+	// 		}	
+	// 	}
+	// 	fflush(stdout);
+	//}
 }
 
 void treat_special_client() {
 
 }
 
-extern int errno;
-
 int main ()
 {
-	sqlite3 *db;
+	
 	char *err_msg = 0;
 
-	int connection;
-	connection = sqlite3_open("weather.db", &db);
-	if(connection) {
-		fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
-		return(0);
-	} 
-	else {
-		fprintf(stderr, "Opened database successfully\n");
-	}
-	// initialize server
+	
 	int first_sd, second_sd;	
 	struct sockaddr_in server;
     struct sockaddr_in from;
@@ -227,17 +226,25 @@ int main ()
     	} else if (pid == 0) {
     		// copil
     		close(first_sd);
+			int connection;
+			connection = sqlite3_open("weather.db", &db);
+			if(connection) {
+				fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
+				return(0);
+			} 
+			else {
+			fprintf(stderr, "Opened database successfully\n");
+			}
 
     		/* s-a realizat conexiunea, se astepta mesajul */
     	
     		printf ("[server] The client connect at %d...\n", which_sd);
     		fflush (stdout);
 			switch (which_sd) {
-				case 4: 
-					treat_regular_client(client, db);
-					fflush (stdout);
+				case 3: 
+					treat_regular_client(client);
 					break;
-				case 5:
+				case 4:
 					treat_special_client();
 					break;
 				default:
@@ -247,5 +254,6 @@ int main ()
     		exit(0);
     	}
 
-     }		
-}				
+    }		
+}			
+
