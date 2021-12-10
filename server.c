@@ -136,43 +136,34 @@ int init_server(int* first_sd, int* second_sd, struct sockaddr_in server, struct
 }
 
 void treat_regular_client(int client) {
-	
-	char* city;
-	city = read_string_from_socket(client);
-	printf ("[server]1: Mesajul a fost receptionat...%s.... de la %d\n", city, client);
+	int exit = 0;
 
-	char* calendar_date;
-	calendar_date = read_string_from_socket(client);
-	printf ("[server]2: Mesajul a fost receptionat...%s\n", calendar_date);
-	printf("Done");
-	printf("%s\n", select_weather_forecast(db, "Iasi", "2021-05-20"));
-	// int exit = 0;
+	while (1) {
+		if (exit == 0) {
 
-	// while (1) {
-	// 	if (exit == 0) {
-
-	// 		char* city;
-	// 		city = read_string_from_socket(client);
-	// 		printf ("[server]1: Mesajul a fost receptionat...%s.... de la %d\n", city, client);
+			char *city;
+			city = read_string_from_socket(client);
+			printf ("[server]1: Mesajul a fost receptionat...%s.... de la %d\n", city, client);
 
 
-	// 		char* calendar_date;
-	// 		calendar_date = read_string_from_socket(client);
-	// 		printf ("[server]2: Mesajul a fost receptionat...%s\n", calendar_date);
+			char* calendar_date;
+			calendar_date = read_string_from_socket(client);
+			printf ("[server]2: Mesajul a fost receptionat...%s\n", calendar_date);
 
-	// 		printf("%s\n", select_weather_forecast(db, "Iasi", "2021-05-20"));
-	// 		//send from database the requested info
+			// printf("%s\n", select_weather_forecast(db, city, calendar_date));
+			printf("%s\n", select_weather_forecast(db, "Iasi", "2021-05-20"));
+			//send from database the requested info
 		
-	// 		char* exit_msg;
-	// 		exit_msg = read_string_from_socket(client);
-	// 		printf ("[server]3: Mesajul a fost receptionat...%s\n", exit_msg);
-	// 		if (strcmp(exit_msg, "Y") == 0) {
-	// 			exit = 1;
-	// 			close(client);
-	// 		}	
-	// 	}
-	// 	fflush(stdout);
-	//}
+			// char* exit_msg;
+			// exit_msg = read_string_from_socket(client);
+			// printf ("[server]3: Mesajul a fost receptionat...%s\n", exit_msg);
+			// if (strcmp(exit_msg, "Y") == 0) {
+			// 	exit = 1;
+			// 	close(client);
+			// }	
+		}
+		fflush(stdout);
+	}
 }
 
 void treat_special_client() {

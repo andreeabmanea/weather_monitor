@@ -12,7 +12,9 @@ int main() {
     fprintf(stderr, "Opened database successfully\n");
     }
     printf("%s\n", select_weather_forecast(db, "Iasi", "2021-05-20"));
+    printf("-----------------------\n");
     printf("%s\n", select_weather_forecast(db, "Iasi", "2021-05-20"));
+    printf("-----------------------\n");
     printf("%s\n", select_weather_forecast(db, "Iasi", "2021-05-20"));
   
 

@@ -185,6 +185,7 @@ char* select_weather_forecast(sqlite3 *db, char *city, char *calendar_date) {
    sqlite3_stmt *stmt = NULL;
    
    int result = sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
+   sqlite3_reset(stmt);
    sqlite3_bind_text(stmt, 1, city, -1, SQLITE_TRANSIENT);
    sqlite3_bind_text(stmt, 2, calendar_date, -1, SQLITE_TRANSIENT);
    if (result != SQLITE_OK) {
@@ -193,7 +194,7 @@ char* select_weather_forecast(sqlite3 *db, char *city, char *calendar_date) {
    }
    result = sqlite3_step(stmt);
    
-   char *statuses; 
+   static char statuses[100];
    strcpy(statuses, "");
 
    int row_count = 0;
@@ -208,7 +209,7 @@ char* select_weather_forecast(sqlite3 *db, char *city, char *calendar_date) {
       
       result = sqlite3_step(stmt);
     }
-   result = sqlite3_finalize(stmt);
+   sqlite3_finalize(stmt);
    return statuses;
   }
 

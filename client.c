@@ -84,7 +84,7 @@ int main (int argc, char *argv[])
   }
 
   void regular_client(int sd) {
-    // while (1) {
+    while (1) {
       char city[100];
       bzero(city, 100);
       printf("Input a city from Romania \n");
@@ -115,7 +115,7 @@ int main (int argc, char *argv[])
       //   break;
       // }
       
-    // }
+    }
   }
 
   void special_client() {
