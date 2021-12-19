@@ -180,7 +180,7 @@ int validate_weather_status(sqlite3 *db, char *status) {
    return 0;
   }
 
-char* select_weather_forecast(sqlite3 *db, char *city, char *calendar_date) {
+char* select_weather_forecast(sqlite3 *db, char* city, char* calendar_date) {
    const char* sql = "SELECT min_temperature, max_temperature, precipitations, fk_status FROM weather_forecast WHERE fk_city = ? and calendar_date = ?";
    sqlite3_stmt *stmt = NULL;
    
@@ -228,6 +228,32 @@ int check_row(char *row_content) {
    return 1;
 
 }
+
+char* concatenate_database_info(char* city, char* calendar_date, char* min_temperature, char* max_temperature, char* precipitations, char* status) {
+	static char db_info[500];
+   strcpy(db_info, "");
+	bzero(db_info, 500);
+	strcat(db_info, "City: ");
+	strcat(db_info, city);
+	strcat(db_info, "\n");
+	strcat(db_info, "Calendar Date: ");
+	strcat(db_info, calendar_date);
+	strcat(db_info, "\n");
+	strcat(db_info, "Min Temperature: ");
+	strcat(db_info, min_temperature);
+	strcat(db_info, "\n");
+	strcat(db_info, "Max Temperature: ");
+	strcat(db_info, max_temperature);
+	strcat(db_info, "\n");
+	strcat(db_info, "Precipitations: ");
+	strcat(db_info, precipitations);
+	strcat(db_info, "\n");
+	strcat(db_info, "Status: ");
+	strcat(db_info, status);
+   db_info[strlen(db_info)] = '\0';
+	return db_info;
+}
+
 
 // int main() {
 //    //printf("%lu", hash("andreea"));

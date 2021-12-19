@@ -92,28 +92,36 @@ int main (int argc, char *argv[])
       fflush(stdin);
       scanf("%s", city);
       write_string_to_socket(sd, city);
+      printf("\n");
 
       char calendar_date[100];
       bzero(calendar_date, 100);
-      printf("Input a date with the format DD/MM/YYYY \n");
+      printf("Input a date with the format YYYY-MM-DD \n");
       fflush(stdout);
       fflush(stdin);
       scanf("%s", calendar_date);
       write_string_to_socket(sd, calendar_date);
+      printf("\n");
 
-     // receive meteo info from server
+      // receive meteo info from server
+      char response[500];
+      bzero(response, 500);
+      strcpy(response, read_string_from_socket(sd));
+      printf("%s\n", response);
+      printf("\n");
 
-      // char exit_msg[100];
-      // bzero(exit_msg, 100);
-      // printf("Do you wish to disconnect? Types Y/N \n");
-      // fflush(stdout);
-      // fflush(stdin);
-      // scanf("%s", exit_msg);
-      // write_string_to_socket(sd, exit_msg);
-      // if (strcmp(exit_msg, "Y") == 0) { 
-      //   close(sd);
-      //   break;
-      // }
+      char exit_msg[100];
+      bzero(exit_msg, 100);
+      printf("Do you wish to disconnect? Types Y/N \n");
+      fflush(stdout);
+      fflush(stdin);
+      scanf("%s", exit_msg);
+      write_string_to_socket(sd, exit_msg);
+      printf("\n");
+      if (strcmp(exit_msg, "Y") == 0) { 
+        close(sd);
+        break;
+      }
       
     }
   }

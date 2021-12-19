@@ -32,6 +32,8 @@ void write_string_to_socket(int sd, char* message) {
     write(sd, message, message_length);
 }
 
+
+
 int get_fd_of_accepted_connection(int file_descriptors[], int* which_sd, struct sockaddr *addr, socklen_t *addrlen) {
     
 	int maxfd = -1, fd = -1;
@@ -141,26 +143,58 @@ void treat_regular_client(int client) {
 	while (1) {
 		if (exit == 0) {
 
-			char *city;
-			city = read_string_from_socket(client);
-			printf ("[server]1: Mesajul a fost receptionat...%s.... de la %d\n", city, client);
+			char city[100];
+			bzero(city, 100);
+			strcpy(city, read_string_from_socket(client));
+			printf ("[server]: Message received...%s\n", city, strlen(city));
 
 
-			char* calendar_date;
-			calendar_date = read_string_from_socket(client);
-			printf ("[server]2: Mesajul a fost receptionat...%s\n", calendar_date);
+			char calendar_date[100];
+			bzero(calendar_date, 100);
+			strcpy(calendar_date, read_string_from_socket(client));
+			printf ("[server]: Message received...%s\n", calendar_date, strlen(calendar_date));
 
-			// printf("%s\n", select_weather_forecast(db, city, calendar_date));
-			printf("%s\n", select_weather_forecast(db, "Iasi", "2021-05-20"));
+
 			//send from database the requested info
 		
-			// char* exit_msg;
-			// exit_msg = read_string_from_socket(client);
-			// printf ("[server]3: Mesajul a fost receptionat...%s\n", exit_msg);
-			// if (strcmp(exit_msg, "Y") == 0) {
-			// 	exit = 1;
-			// 	close(client);
-			// }	
+			char db_info[500];
+			bzero(db_info, 500);
+			strcpy(db_info, select_weather_forecast(db, city, calendar_date));
+			
+			char* pointer;
+   			char min_temp[10];
+			char max_temp[10];
+			char precipitations[10];
+			char status[50];
+   			int index = 0;
+   			pointer = strtok(db_info, " ");
+   			while (pointer!= NULL) {
+				pointer[strlen(pointer)] = '\0';
+				switch (index) {
+					case 0: strcpy(min_temp, pointer);
+							break;
+					case 1: strcpy(max_temp, pointer);
+							break;
+					case 2: strcpy(precipitations, pointer);
+							break;
+					case 3: strcpy(status, pointer);
+							break;
+					default: printf("End of string");
+				}
+				index++;
+      			pointer = strtok(NULL, " ");
+  			}	
+			char formatted_info[500];
+			strcpy(formatted_info, concatenate_database_info(city, calendar_date, min_temp, max_temp, precipitations, status));
+			
+			write_string_to_socket(client, formatted_info);
+			char* exit_msg;
+			exit_msg = read_string_from_socket(client);
+			printf ("[server]: Message received...%s\n", exit_msg);
+			if (strcmp(exit_msg, "Y") == 0) {
+				exit = 1;
+				close(client);
+			}	
 		}
 		fflush(stdout);
 	}
@@ -198,8 +232,6 @@ int main ()
 		/* we accept a client (blocking call) */
 		
     	client = get_fd_of_accepted_connection(socket_descriptors, &which_sd, (struct sockaddr *) &from, &length);
-		// printf("%d", which_sd);
-    	/* eroare la acceptarea conexiunii de la un client */
     	if (client < 0)
     	{
     		perror ("Error at accept().\n");
@@ -229,7 +261,7 @@ int main ()
 
     		/* s-a realizat conexiunea, se astepta mesajul */
     	
-    		printf ("[server] The client connect at %d...\n", which_sd);
+    		printf ("[server] The client connected at port %d...\n", (which_sd == 3) ? 2028 : 2029);
     		fflush (stdout);
 			switch (which_sd) {
 				case 3: 
