@@ -147,14 +147,12 @@ void treat_regular_client(int client) {
 			char city[100];
 			bzero(city, 100);
 			strcpy(city, read_string_from_socket(client));
-			printf ("[server]: Message received...%s\n", city, strlen(city));
-
 
 			char calendar_date[100];
 			bzero(calendar_date, 100);
 			strcpy(calendar_date, read_string_from_socket(client));
-			printf ("[server]: Message received...%s\n", calendar_date, strlen(calendar_date));
 
+			printf("[server]: Searching in database info for (%s, %s)...\n", city, calendar_date);
 
 			//send from database the requested info
 		
@@ -180,7 +178,7 @@ void treat_regular_client(int client) {
 							break;
 					case 3: strcpy(status, pointer);
 							break;
-					default: printf("End of string");
+					default: break;
 				}
 				index++;
       			pointer = strtok(NULL, " ");
@@ -191,11 +189,11 @@ void treat_regular_client(int client) {
 			write_string_to_socket(client, formatted_info);
 			char* exit_msg;
 			exit_msg = read_string_from_socket(client);
-			printf ("[server]: Message received...%s\n", exit_msg);
 			if (strcmp(exit_msg, "Y") == 0) {
+				printf ("[server]: Client has disconnected...\n");
 				exit = 1;
 				close(client);
-			}	
+			}
 		}
 		fflush(stdout);
 	}
@@ -207,12 +205,11 @@ void treat_special_client(int client) {
 	while (1) {
 		bzero(username, 100);	
 		strcpy(username, read_string_from_socket(client));
-		printf ("[server]: Message received...%s\n", username, strlen(username));
+		printf ("[server]: Administrator %s has connected\n", username);
 
 		char password[100];
 		bzero(password, 100);	
 		strcpy(password, read_string_from_socket(client));
-		printf ("[server]: Message received...%s\n", password, strlen(password));
 
 		char encrypted_pass[200];
 		bzero(encrypted_pass, 200);
@@ -240,14 +237,15 @@ void treat_special_client(int client) {
 			} else {
 				close(fp);
 				fflush(fp);
-				process_file_from_client(db, path, username);
+				int rows_number = process_file_from_client(db, path, username);
+				printf("[server]: %d rows have been successfully inserted into database!\n", rows_number);
 				break;
 			}
 		}
 		char* exit_msg;
 		exit_msg = read_string_from_socket(client);
-		printf ("[server]: Message received...%s\n", exit_msg);
 		if (strcmp(exit_msg, "N") == 0) {
+			printf ("[server]: Administrator %s has disconnected\n", username);
 			close(client);
 			break;
 		}	

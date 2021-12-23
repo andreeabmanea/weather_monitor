@@ -1,0 +1,5 @@
+- Add more admins to database
+- Add primary keys (no more duplicates)
+- Data quality checks
+- Handle when server suddenly disconnects 
+- Check and handle exception so the server won't ever break

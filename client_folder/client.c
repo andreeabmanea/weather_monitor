@@ -130,7 +130,7 @@ int main (int argc, char *argv[])
     while(1) {
       char username[100];
       bzero(username, 100);
-      printf("%s\n","Enter your username:");
+      printf("%s","Enter your username: ");
       fflush(stdout);
       fflush(stdin);
       scanf("%s", username);
@@ -149,7 +149,7 @@ int main (int argc, char *argv[])
       fflush(stdin);
       strcpy(check, read_string_from_socket(sd));
       if (strcmp(check, "OK") == 0) {
-        printf("Welcome back, %s\n", username);
+        printf("\nWelcome back, %s!\n", username);
         break;
       }
       else printf("Invalid credentials, please try again!\n\n");

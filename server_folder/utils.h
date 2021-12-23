@@ -115,10 +115,11 @@ int process_file_from_client(sqlite3 *db, char *path, char *username) {
          if (err != SQLITE_DONE) {
             printf("Execution of the statement failed: %s\n", sqlite3_errmsg(db));
             sqlite3_finalize(stmt);
-            return;
+            return -1;
          }
       sqlite3_reset(stmt);      
       }
+      return last_line;
    }
 
 int validate_city(sqlite3 *db, char *city) {
@@ -228,7 +229,6 @@ int check_credentials(sqlite3 *db, char* username, char* password) {
       return;
    }
    result = sqlite3_step(stmt);
-   printf("%d\n", result);
    if (result == SQLITE_ROW) {
       return 1;
    }
