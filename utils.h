@@ -213,6 +213,26 @@ char* select_weather_forecast(sqlite3 *db, char* city, char* calendar_date) {
    return statuses;
   }
 
+int check_credentials(sqlite3 *db, char* username, char* password) {
+   const char* sql = "SELECT * FROM user WHERE username = ? and password = ?";
+   sqlite3_stmt *stmt = NULL;
+   
+   int result = sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
+   sqlite3_reset(stmt);
+   sqlite3_bind_text(stmt, 1, username, -1, SQLITE_TRANSIENT);
+   sqlite3_bind_text(stmt, 2, password, -1, SQLITE_TRANSIENT);
+   if (result != SQLITE_OK) {
+      printf("Prepare for statement failed: %s\n", sqlite3_errmsg(db));
+      return;
+   }
+   result = sqlite3_step(stmt);
+   printf("%d\n", result);
+   if (result == SQLITE_ROW) {
+      return 1;
+   }
+   sqlite3_finalize(stmt);
+   return -1;
+}
 
 int check_row(char *row_content) {
 

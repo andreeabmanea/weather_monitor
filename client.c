@@ -76,7 +76,7 @@ int main (int argc, char *argv[])
       regular_client(sd);
       break;
     case 2029: 
-      special_client();
+      special_client(sd);
       break;
     default: 
       printf("Unknown port");
@@ -126,6 +126,34 @@ int main (int argc, char *argv[])
     }
   }
 
-  void special_client() {
+  void special_client(int sd) {
+    while(1) {
+      char username[100];
+      bzero(username, 100);
+      printf("%s\n","Enter your username:");
+      fflush(stdout);
+      fflush(stdin);
+      scanf("%s", username);
+      write_string_to_socket(sd, username);
+
+      char password[100];
+      bzero(password, 100);
+      fflush(stdout);
+      fflush(stdin);
+      strcpy(password, getpass("Enter your password: "));
+      write_string_to_socket(sd, password);
+
+      char check[10];
+      bzero(check, 10);
+      fflush(stdout);
+      fflush(stdin);
+      strcpy(check, read_string_from_socket(sd));
+      if (strcmp(check, "OK") == 0) {
+        printf("Welcome back, %s", username);
+        break;
+      }
+      else printf("Invalid credentials, please try again!\n\n");
+    }
+    
 
   }

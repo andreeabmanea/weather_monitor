@@ -6,7 +6,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <sqlite3.h> 
+#include <sqlite3.h>
+#include <crypt.h> 
 #include "utils.h"
 
 /* portul folosit */
@@ -200,8 +201,29 @@ void treat_regular_client(int client) {
 	}
 }
 
-void treat_special_client() {
+void treat_special_client(int client) {
 
+	while (1) {
+		char username[100];
+		bzero(username, 100);	
+		strcpy(username, read_string_from_socket(client));
+		printf ("[server]: Message received...%s\n", username, strlen(username));
+
+		char password[100];
+		bzero(password, 100);	
+		strcpy(password, read_string_from_socket(client));
+		printf ("[server]: Message received...%s\n", password, strlen(password));
+
+		char encrypted_pass[200];
+		bzero(encrypted_pass, 200);
+		strcpy(encrypted_pass, crypt(password,"k7"));
+
+		if (check_credentials(db, username, encrypted_pass) == 1) {
+			write_string_to_socket(client, "OK");
+			break;
+		}
+		else write_string_to_socket(client, "Not OK");
+	}
 }
 
 int main ()
@@ -268,7 +290,7 @@ int main ()
 					treat_regular_client(client);
 					break;
 				case 4:
-					treat_special_client();
+					treat_special_client(client);
 					break;
 				default:
 					printf("Socket unknown");
