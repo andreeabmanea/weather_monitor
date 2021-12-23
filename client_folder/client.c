@@ -149,11 +149,42 @@ int main (int argc, char *argv[])
       fflush(stdin);
       strcpy(check, read_string_from_socket(sd));
       if (strcmp(check, "OK") == 0) {
-        printf("Welcome back, %s", username);
+        printf("Welcome back, %s\n", username);
         break;
       }
       else printf("Invalid credentials, please try again!\n\n");
     }
-    
 
+    while (1) {
+      FILE *fp;
+      char path[100], full_path[200];
+      bzero(path,100);
+      bzero(full_path, 200);
+      printf("\nEnter a file to send to the server:\n");
+      scanf("%s", path);
+      strcat(full_path, "./client_folder/");
+      strcat(full_path, path);
+      fp = fopen(full_path, "r");
+      char* line;
+      size_t len = 0;
+      ssize_t read;
+      while ((read = getline(&line, &len, fp)) != -1) {
+        write_string_to_socket(sd,line);
+      }
+      write_string_to_socket(sd,"EOF");
+
+      char exit_msg[2];
+      bzero(exit_msg, 2);
+      printf("%s\n", "Do you wish to send another file? Type Y/N");
+      fflush(stdout);
+      fflush(stdin);
+      scanf("%s", exit_msg);
+      write_string_to_socket(sd, exit_msg);
+      printf("\n");
+      if (strcmp(exit_msg, "N") == 0) { 
+        close(sd);
+        break;
+      }
+      
+    }
   }

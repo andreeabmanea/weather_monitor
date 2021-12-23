@@ -77,11 +77,11 @@ int count_lines_from_file(char *path) {
   return number_of_lines;
 }
 
-int process_file_from_client(sqlite3 *db, char *path) {
+int process_file_from_client(sqlite3 *db, char *path, char *username) {
 
    char row[100];
    char *field;
-   const char *sql = "INSERT INTO weather_forecast(fk_city, calendar_date, min_temperature, max_temperature, precipitations, fk_status) VALUES (?, ?, ?, ?, ?, ?)";
+   const char *sql = "INSERT INTO weather_forecast(fk_city, calendar_date, min_temperature, max_temperature, precipitations, fk_status, updated_by) VALUES (?, ?, ?, ?, ?, ?, ?)";
    sqlite3_stmt *stmt;
    int err = sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
    if (err != SQLITE_OK) {
@@ -106,6 +106,8 @@ int process_file_from_client(sqlite3 *db, char *path) {
       while(field != NULL) {
          field[strlen(field)] = '\0';
          sqlite3_bind_text (stmt, column_index, field, -1, SQLITE_TRANSIENT); 
+         if (column_index == 6)
+            sqlite3_bind_text(stmt, 7, username, -1, SQLITE_TRANSIENT);
          field = strtok(NULL, ",");
          column_index++;
          }
@@ -273,34 +275,3 @@ char* concatenate_database_info(char* city, char* calendar_date, char* min_tempe
    db_info[strlen(db_info)] = '\0';
 	return db_info;
 }
-
-
-// int main() {
-//    //printf("%lu", hash("andreea"));
-//    // printf("%s\n", crypt("andreea","k7"));
-//    // printf("%s", crypt("andreea","a7"));
-   
-//    sqlite3 *db;
-//    char *err_msg = 0;
-
-//    int connection;
-//    connection = sqlite3_open("weather.db", &db);
-//    if(connection) {
-//       fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
-//       return(0);
-//    } 
-//       else {
-//          fprintf(stderr, "Opened database successfully\n");
-//       }
-//    // populate_database(db, "database_files/status_for_weather.txt");
-//    // process_file_from_client(db, "example.csv");
-
-//    // printf("%d", validate_city(db, "Iasi"));
-//    // printf("%d", validate_weather_status(db, "Cloudy"));
-//    printf("%s\n",select_weather_forecast(db, "Iasi", "2021-05-20"));
-   
-// }
-
-
-
-

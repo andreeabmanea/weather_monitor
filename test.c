@@ -1,4 +1,4 @@
-#include "utils.h"
+#include "server_folder/utils.h"
 #include <sqlite3.h>
 int main() {
     sqlite3* db;
@@ -11,19 +11,7 @@ int main() {
     else {
     fprintf(stderr, "Opened database successfully\n");
     }
-    char city[100];
-    char cal_date[100];
-    char mini[2];
-    char maxi[2];
-    char prep[10];
-    char status[10];
-    strcpy(city, "Iasi"); 
-    strcpy(cal_date, "2021-05-20");
-     strcpy(mini, "2"); 
-    strcpy(maxi, "3");
-     strcpy(prep, "Iasi"); 
-    strcpy(status, "-20");
-    char res[500];
-    strcpy(res, concatenate_database_info(city, cal_date, mini, maxi, prep, status));
-   printf("%s\n", res);
+   char username[100];
+   strcpy(username,"andreea");
+   process_file_from_client(db, "server_folder/file_from_andreea.csv", username);
 }

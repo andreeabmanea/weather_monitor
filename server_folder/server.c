@@ -202,9 +202,9 @@ void treat_regular_client(int client) {
 }
 
 void treat_special_client(int client) {
-
+	char username[100];
+	
 	while (1) {
-		char username[100];
 		bzero(username, 100);	
 		strcpy(username, read_string_from_socket(client));
 		printf ("[server]: Message received...%s\n", username, strlen(username));
@@ -223,6 +223,34 @@ void treat_special_client(int client) {
 			break;
 		}
 		else write_string_to_socket(client, "Not OK");
+	}
+
+	while (1) {
+		char path[100] = "./server_folder/file_from_";
+		strcat(path,username);
+		strcat(path,".csv");
+		FILE *fp;
+		fp = fopen(path, "w");
+		char file_line[1000];
+		while (1) {
+			bzero(file_line,1000);
+			strcpy(file_line,read_string_from_socket(client));
+			if (strcmp(file_line, "EOF") != 0) {
+				fputs(file_line, fp);
+			} else {
+				close(fp);
+				fflush(fp);
+				process_file_from_client(db, path, username);
+				break;
+			}
+		}
+		char* exit_msg;
+		exit_msg = read_string_from_socket(client);
+		printf ("[server]: Message received...%s\n", exit_msg);
+		if (strcmp(exit_msg, "N") == 0) {
+			close(client);
+			break;
+		}	
 	}
 }
 
