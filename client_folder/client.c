@@ -173,6 +173,13 @@ int main (int argc, char *argv[])
       }
       write_string_to_socket(sd,"EOF");
 
+      char confirmation[100];
+      bzero(confirmation, 100);
+      fflush(stdout);
+      fflush(stdin);
+      strcpy(confirmation, read_string_from_socket(sd));
+      printf("%s\n", confirmation);
+
       char exit_msg[2];
       bzero(exit_msg, 2);
       printf("%s\n", "Do you wish to send another file? Type Y/N");

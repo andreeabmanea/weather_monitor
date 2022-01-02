@@ -35,7 +35,7 @@ void write_string_to_socket(int sd, char* message) {
 
 
 
-int get_fd_of_accepted_connection(int file_descriptors[], int* which_sd, struct sockaddr *addr, socklen_t *addrlen) {
+int get_sd_of_accepted_connection(int descriptors[], int* which_sd, struct sockaddr *addr, socklen_t *addrlen) {
     
 	int maxfd = -1, fd = -1;
     unsigned int i;
@@ -44,12 +44,12 @@ int get_fd_of_accepted_connection(int file_descriptors[], int* which_sd, struct 
 	fd_set readfds;
 	FD_ZERO(&readfds);
 
-	int count = sizeof(file_descriptors)/sizeof(file_descriptors[0]);
+	int count = sizeof(descriptors)/sizeof(descriptors[0]);
     
     for (i = 0; i < count; i++) {
-        FD_SET(file_descriptors[i], &readfds);
-        if (file_descriptors[i] > maxfd)
-            maxfd = file_descriptors[i];
+        FD_SET(descriptors[i], &readfds);
+        if (descriptors[i] > maxfd)
+            maxfd = descriptors[i];
     }
     
 	result = select(maxfd + 1, &readfds, NULL, NULL, NULL);
@@ -58,8 +58,8 @@ int get_fd_of_accepted_connection(int file_descriptors[], int* which_sd, struct 
 	}
     
     for (i = 0; i < count; i++)
-        if (FD_ISSET(file_descriptors[i], &readfds)) {
-            fd = file_descriptors[i];
+        if (FD_ISSET(descriptors[i], &readfds)) {
+            fd = descriptors[i];
             break;
         }
 
@@ -160,33 +160,38 @@ void treat_regular_client(int client) {
 			bzero(db_info, 500);
 			strcpy(db_info, select_weather_forecast(db, city, calendar_date));
 			
-			char* pointer;
-   			char min_temp[10];
-			char max_temp[10];
-			char precipitations[10];
-			char status[50];
-   			int index = 0;
-   			pointer = strtok(db_info, " ");
-   			while (pointer!= NULL) {
-				pointer[strlen(pointer)] = '\0';
-				switch (index) {
-					case 0: strcpy(min_temp, pointer);
-							break;
-					case 1: strcpy(max_temp, pointer);
-							break;
-					case 2: strcpy(precipitations, pointer);
-							break;
-					case 3: strcpy(status, pointer);
-							break;
-					default: break;
-				}
-				index++;
-      			pointer = strtok(NULL, " ");
-  			}	
-			char formatted_info[500];
-			strcpy(formatted_info, concatenate_database_info(city, calendar_date, min_temp, max_temp, precipitations, status));
-			
-			write_string_to_socket(client, formatted_info);
+			if (strcmp(db_info, "") == 0) {
+				write_string_to_socket(client, "There are no records in database for the requested information!");
+			}
+			else {
+				char* pointer;
+				char min_temp[10];
+				char max_temp[10];
+				char precipitations[10];
+				char status[50];
+				int index = 0;
+				pointer = strtok(db_info, " ");
+				while (pointer!= NULL) {
+					pointer[strlen(pointer)] = '\0';
+					switch (index) {
+						case 0: strcpy(min_temp, pointer);
+								break;
+						case 1: strcpy(max_temp, pointer);
+								break;
+						case 2: strcpy(precipitations, pointer);
+								break;
+						case 3: strcpy(status, pointer);
+								break;
+						default: break;
+					}
+					index++;
+					pointer = strtok(NULL, " ");
+				}	
+				char formatted_info[500];
+				strcpy(formatted_info, concatenate_database_info(city, calendar_date, min_temp, max_temp, precipitations, status));
+				
+				write_string_to_socket(client, formatted_info);
+			}
 			char* exit_msg;
 			exit_msg = read_string_from_socket(client);
 			if (strcmp(exit_msg, "Y") == 0) {
@@ -238,7 +243,14 @@ void treat_special_client(int client) {
 				close(fp);
 				fflush(fp);
 				int rows_number = process_file_from_client(db, path, username);
-				printf("[server]: %d rows have been successfully inserted into database!\n", rows_number);
+				if (rows_number == -1) {
+					printf("[server]: Invalid file format!\n");
+					write_string_to_socket(client, "The file you sent has an invalid format! Please check and retry.");
+				}
+				else {
+					printf("[server]: %d rows have been successfully inserted into database!\n", rows_number);
+					write_string_to_socket(client, "Thank you for the updates!");
+				}
 				break;
 			}
 		}
@@ -279,7 +291,7 @@ int main ()
     	
 		/* we accept a client (blocking call) */
 		
-    	client = get_fd_of_accepted_connection(socket_descriptors, &which_sd, (struct sockaddr *) &from, &length);
+    	client = get_sd_of_accepted_connection(socket_descriptors, &which_sd, (struct sockaddr *) &from, &length);
     	if (client < 0)
     	{
     		perror ("Error at accept().\n");

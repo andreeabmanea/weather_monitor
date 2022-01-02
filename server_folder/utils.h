@@ -98,7 +98,10 @@ int process_file_from_client(sqlite3 *db, char *path, char *username) {
       fgets(row, 100, fp);
       if (current_line!=last_line)
          row[strlen(row)-1] = '\0';
-      // check_row(row);
+      printf("%s\n", row);
+      if (check_row(db, row) == 0) {
+         return -1;
+      }
    
       field = strtok(row, ",");
       int column_index = 1;
@@ -132,7 +135,7 @@ int validate_city(sqlite3 *db, char *city) {
       return;
    }
    result = sqlite3_step(stmt);
-   char *cities; 
+   static char cities[200]; 
    strcpy(cities, "");
 
    int row_count = 0;
@@ -162,7 +165,7 @@ int validate_weather_status(sqlite3 *db, char *status) {
       return;
    }
    result = sqlite3_step(stmt);
-   char *statuses; 
+   static char statuses[200]; 
    strcpy(statuses, "");
 
    int row_count = 0;
@@ -176,7 +179,6 @@ int validate_weather_status(sqlite3 *db, char *status) {
       result = sqlite3_step(stmt);
     }
    }
-   printf("%s\n", statuses);
    result = sqlite3_finalize(stmt);
    if (strstr(statuses, status) != NULL)
       return 1;
@@ -197,23 +199,23 @@ char* select_weather_forecast(sqlite3 *db, char* city, char* calendar_date) {
    }
    result = sqlite3_step(stmt);
    
-   static char statuses[100];
-   strcpy(statuses, "");
+   static char info[100];
+   strcpy(info, "");
 
    int row_count = 0;
    while(result == SQLITE_ROW) {
       row_count++;
       int column_count = sqlite3_column_count(stmt);
       for (int column = 0; column < column_count; column++) {
-         strcat(statuses, sqlite3_column_text(stmt, column));
-         strcat(statuses, " ");
+         strcat(info, sqlite3_column_text(stmt, column));
+         strcat(info, " ");
          fflush(stdout);
       }
       
       result = sqlite3_step(stmt);
     }
    sqlite3_finalize(stmt);
-   return statuses;
+   return info;
   }
 
 int check_credentials(sqlite3 *db, char* username, char* password) {
@@ -236,18 +238,32 @@ int check_credentials(sqlite3 *db, char* username, char* password) {
    return -1;
 }
 
-int check_row(char *row_content) {
-
+int check_row(sqlite3 *db, char *row_content) {
+   printf("%s\n", row_content);
    char *field = strtok(row_content, ",");
    int column = 1;
+   int OK = 1;
    while(field != NULL) {
       field[strlen(field)] = '\0';
-      //check every field if it matches a format for the column
+      if (column == 1) {
+         printf("%s\n", field);
+         if (validate_city(db, field) == 0) {
+            OK = 0;
+         }
+
+      }
+      if (column == 6) {
+         if (validate_weather_status(db, field) == 0) {
+            OK = 0;
+         }
+      }
       field = strtok(NULL, ",");
       column++;
+      if (column == 7) 
+         break;
    }
 
-   return 1;
+   return OK;
 
 }
 
