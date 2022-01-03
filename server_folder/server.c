@@ -9,12 +9,13 @@
 #include <sqlite3.h>
 #include <crypt.h> 
 #include "utils.h"
-
+#include <signal.h>
 /* portul folosit */
 #define PORT_1 2028
 #define PORT_2 2029
 extern int errno;
 sqlite3 *db;
+static volatile int on = 1;
 
 char* read_string_from_socket(int sd) {
   int message_length;
@@ -31,6 +32,10 @@ void write_string_to_socket(int sd, char* message) {
     /* trimiterea mesajului la server */
     write(sd, &message_length, sizeof(int));
     write(sd, message, message_length);
+}
+
+void sig_handler(int sig) {
+	on = 0;
 }
 
 
@@ -139,9 +144,12 @@ int init_server(int* first_sd, int* second_sd, struct sockaddr_in server, struct
 }
 
 void treat_regular_client(int client) {
-	int exit = 0;
+	int exit_flag = 0;
 
 	while (1) {
+		signal(SIGINT, sig_handler);
+		if (on == 0) 
+			exit(0);
 		if (exit == 0) {
 
 			char city[100];
@@ -196,7 +204,7 @@ void treat_regular_client(int client) {
 			exit_msg = read_string_from_socket(client);
 			if (strcmp(exit_msg, "Y") == 0) {
 				printf ("[server]: Client has disconnected...\n");
-				exit = 1;
+				exit_flag = 1;
 				close(client);
 			}
 		}
