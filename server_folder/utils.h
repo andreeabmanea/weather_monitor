@@ -98,10 +98,6 @@ int process_file_from_client(sqlite3 *db, char *path, char *username) {
       fgets(row, 100, fp);
       if (current_line!=last_line)
          row[strlen(row)-1] = '\0';
-      printf("%s\n", row);
-      if (check_row(db, row) == 0) {
-         return -1;
-      }
    
       field = strtok(row, ",");
       int column_index = 1;
@@ -126,6 +122,7 @@ int process_file_from_client(sqlite3 *db, char *path, char *username) {
    }
 
 int validate_city(sqlite3 *db, char *city) {
+
    const char* sql = "SELECT city.city_name FROM city";
    sqlite3_stmt *stmt = NULL;
    
@@ -135,7 +132,7 @@ int validate_city(sqlite3 *db, char *city) {
       return;
    }
    result = sqlite3_step(stmt);
-   static char cities[200]; 
+   char *cities; 
    strcpy(cities, "");
 
    int row_count = 0;
@@ -165,7 +162,7 @@ int validate_weather_status(sqlite3 *db, char *status) {
       return;
    }
    result = sqlite3_step(stmt);
-   static char statuses[200]; 
+   char *statuses; 
    strcpy(statuses, "");
 
    int row_count = 0;
@@ -179,11 +176,25 @@ int validate_weather_status(sqlite3 *db, char *status) {
       result = sqlite3_step(stmt);
     }
    }
+   printf("%s\n", statuses);
    result = sqlite3_finalize(stmt);
    if (strstr(statuses, status) != NULL)
       return 1;
    return 0;
   }
+
+void delete_from_db(sqlite3 *db, char* city) {
+   const char* sql = "DELETE FROM weather_forecast WHERE fk_city = ?";
+   sqlite3_stmt *stmt = NULL;
+   int result = sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
+   sqlite3_reset(stmt);
+   sqlite3_bind_text(stmt, 1, city, -1, SQLITE_TRANSIENT);
+   if (result != SQLITE_OK) {
+      printf("Prepare for statement failed: %s\n", sqlite3_errmsg(db));
+      return;
+   }
+   result = sqlite3_step(stmt);
+}
 
 char* select_weather_forecast(sqlite3 *db, char* city, char* calendar_date) {
    const char* sql = "SELECT min_temperature, max_temperature, precipitations, fk_status FROM weather_forecast WHERE fk_city = ? and calendar_date = ?";
@@ -199,23 +210,23 @@ char* select_weather_forecast(sqlite3 *db, char* city, char* calendar_date) {
    }
    result = sqlite3_step(stmt);
    
-   static char info[100];
-   strcpy(info, "");
+   static char statuses[100];
+   strcpy(statuses, "");
 
    int row_count = 0;
    while(result == SQLITE_ROW) {
       row_count++;
       int column_count = sqlite3_column_count(stmt);
       for (int column = 0; column < column_count; column++) {
-         strcat(info, sqlite3_column_text(stmt, column));
-         strcat(info, " ");
+         strcat(statuses, sqlite3_column_text(stmt, column));
+         strcat(statuses, " ");
          fflush(stdout);
       }
       
       result = sqlite3_step(stmt);
     }
    sqlite3_finalize(stmt);
-   return info;
+   return statuses;
   }
 
 int check_credentials(sqlite3 *db, char* username, char* password) {
@@ -239,27 +250,30 @@ int check_credentials(sqlite3 *db, char* username, char* password) {
 }
 
 int check_row(sqlite3 *db, char *row_content) {
-   printf("%s\n", row_content);
+
    char *field = strtok(row_content, ",");
    int column = 1;
    int OK = 1;
    while(field != NULL) {
+      static char field_mod[100];
+      bzero(field_mod, 100);
       field[strlen(field)] = '\0';
+      strcpy(field_mod, field);
       if (column == 1) {
-         printf("%s\n", field);
-         if (validate_city(db, field) == 0) {
+         printf("%s\n",field_mod);
+         if (validate_city(db, field_mod) == 0) {
             OK = 0;
          }
-
       }
       if (column == 6) {
-         if (validate_weather_status(db, field) == 0) {
+         if (validate_weather_status(db, field_mod) == 0) {
             OK = 0;
          }
       }
+      //check every field if it matches a format for the column
       field = strtok(NULL, ",");
       column++;
-      if (column == 7) 
+      if (column == 7)
          break;
    }
 

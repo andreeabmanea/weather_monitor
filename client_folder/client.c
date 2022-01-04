@@ -156,33 +156,58 @@ int main (int argc, char *argv[])
     }
 
     while (1) {
-      FILE *fp;
-      char path[100], full_path[200];
-      bzero(path,100);
-      bzero(full_path, 200);
-      printf("\nEnter a file to send to the server:\n");
-      scanf("%s", path);
-      strcat(full_path, "./client_folder/");
-      strcat(full_path, path);
-      fp = fopen(full_path, "r");
-      char* line;
-      size_t len = 0;
-      ssize_t read;
-      while ((read = getline(&line, &len, fp)) != -1) {
-        write_string_to_socket(sd,line);
+      printf("Choose a command by typing 1 or 2:\n");
+      printf("[1] Send file with updates\n");
+      printf("[2] Delete information for a city\n");
+      char choice[10];
+      bzero(choice,10);
+      scanf("%s", choice);
+      write_string_to_socket(sd,choice);
+
+      if (strcmp(choice,"1") == 0) {
+
+        FILE *fp;
+        char path[100], full_path[200];
+        bzero(path,100);
+        bzero(full_path, 200);
+        printf("\nEnter a file to send to the server:\n");
+        scanf("%s", path);
+        strcat(full_path, "./client_folder/");
+        strcat(full_path, path);
+        fp = fopen(full_path, "r");
+        char* line;
+        size_t len = 0;
+        ssize_t read;
+        while ((read = getline(&line, &len, fp)) != -1) {
+          write_string_to_socket(sd,line);
+        }
+        write_string_to_socket(sd,"EOF");
       }
-      write_string_to_socket(sd,"EOF");
+      else if (strcmp(choice,"2")==0) {
+        printf("Enter a city for which to delete the records\n");
+        char city[20];
+        bzero(city,20);
+        scanf("%s", city);
+        write_string_to_socket(sd,city);
+      }
+      else {
+          printf("\nInvalid command! Try again!\n");
+          printf("\n");
+          continue;
+          }
 
       char confirmation[100];
       bzero(confirmation, 100);
       fflush(stdout);
       fflush(stdin);
       strcpy(confirmation, read_string_from_socket(sd));
-      printf("%s\n", confirmation);
+      printf("\n%s\n", confirmation);
+      printf("\n");
 
-      char exit_msg[2];
-      bzero(exit_msg, 2);
-      printf("%s\n", "Do you wish to send another file? Type Y/N");
+
+      char exit_msg[50];
+      bzero(exit_msg, 50);
+      printf("%s\n", "Do you wish to perform another action? Type Y/N");
       fflush(stdout);
       fflush(stdin);
       scanf("%s", exit_msg);

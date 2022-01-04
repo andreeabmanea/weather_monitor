@@ -9,13 +9,12 @@
 #include <sqlite3.h>
 #include <crypt.h> 
 #include "utils.h"
-#include <signal.h>
+
 /* portul folosit */
 #define PORT_1 2028
 #define PORT_2 2029
 extern int errno;
 sqlite3 *db;
-static volatile int on = 1;
 
 char* read_string_from_socket(int sd) {
   int message_length;
@@ -34,13 +33,9 @@ void write_string_to_socket(int sd, char* message) {
     write(sd, message, message_length);
 }
 
-void sig_handler(int sig) {
-	on = 0;
-}
 
 
-
-int get_sd_of_accepted_connection(int descriptors[], int* which_sd, struct sockaddr *addr, socklen_t *addrlen) {
+int get_fd_of_accepted_connection(int file_descriptors[], int* which_sd, struct sockaddr *addr, socklen_t *addrlen) {
     
 	int maxfd = -1, fd = -1;
     unsigned int i;
@@ -49,12 +44,12 @@ int get_sd_of_accepted_connection(int descriptors[], int* which_sd, struct socka
 	fd_set readfds;
 	FD_ZERO(&readfds);
 
-	int count = sizeof(descriptors)/sizeof(descriptors[0]);
+	int count = sizeof(file_descriptors)/sizeof(file_descriptors[0]);
     
     for (i = 0; i < count; i++) {
-        FD_SET(descriptors[i], &readfds);
-        if (descriptors[i] > maxfd)
-            maxfd = descriptors[i];
+        FD_SET(file_descriptors[i], &readfds);
+        if (file_descriptors[i] > maxfd)
+            maxfd = file_descriptors[i];
     }
     
 	result = select(maxfd + 1, &readfds, NULL, NULL, NULL);
@@ -63,12 +58,11 @@ int get_sd_of_accepted_connection(int descriptors[], int* which_sd, struct socka
 	}
     
     for (i = 0; i < count; i++)
-        if (FD_ISSET(descriptors[i], &readfds)) {
-            fd = descriptors[i];
+        if (FD_ISSET(file_descriptors[i], &readfds)) {
+            fd = file_descriptors[i];
             break;
         }
 
-	
     if (fd == -1)
         return -1;
     else {
@@ -144,12 +138,9 @@ int init_server(int* first_sd, int* second_sd, struct sockaddr_in server, struct
 }
 
 void treat_regular_client(int client) {
-	int exit_flag = 0;
+	int exit = 0;
 
 	while (1) {
-		signal(SIGINT, sig_handler);
-		if (on == 0) 
-			exit(0);
 		if (exit == 0) {
 
 			char city[100];
@@ -167,44 +158,43 @@ void treat_regular_client(int client) {
 			char db_info[500];
 			bzero(db_info, 500);
 			strcpy(db_info, select_weather_forecast(db, city, calendar_date));
-			
-			if (strcmp(db_info, "") == 0) {
-				write_string_to_socket(client, "There are no records in database for the requested information!");
+			if (strcmp(db_info, "")==0) {
+				write_string_to_socket(client, "There are no records in database for your request!");
 			}
 			else {
-				char* pointer;
-				char min_temp[10];
-				char max_temp[10];
-				char precipitations[10];
-				char status[50];
-				int index = 0;
-				pointer = strtok(db_info, " ");
-				while (pointer!= NULL) {
-					pointer[strlen(pointer)] = '\0';
-					switch (index) {
-						case 0: strcpy(min_temp, pointer);
-								break;
-						case 1: strcpy(max_temp, pointer);
-								break;
-						case 2: strcpy(precipitations, pointer);
-								break;
-						case 3: strcpy(status, pointer);
-								break;
-						default: break;
-					}
-					index++;
-					pointer = strtok(NULL, " ");
-				}	
-				char formatted_info[500];
-				strcpy(formatted_info, concatenate_database_info(city, calendar_date, min_temp, max_temp, precipitations, status));
-				
-				write_string_to_socket(client, formatted_info);
+			char* pointer;
+   			char min_temp[10];
+			char max_temp[10];
+			char precipitations[10];
+			char status[50];
+   			int index = 0;
+   			pointer = strtok(db_info, " ");
+   			while (pointer!= NULL) {
+				pointer[strlen(pointer)] = '\0';
+				switch (index) {
+					case 0: strcpy(min_temp, pointer);
+							break;
+					case 1: strcpy(max_temp, pointer);
+							break;
+					case 2: strcpy(precipitations, pointer);
+							break;
+					case 3: strcpy(status, pointer);
+							break;
+					default: break;
+				}
+				index++;
+      			pointer = strtok(NULL, " ");
+  			}	
+			char formatted_info[500];
+			strcpy(formatted_info, concatenate_database_info(city, calendar_date, min_temp, max_temp, precipitations, status));
+			
+			write_string_to_socket(client, formatted_info);
 			}
 			char* exit_msg;
 			exit_msg = read_string_from_socket(client);
 			if (strcmp(exit_msg, "Y") == 0) {
 				printf ("[server]: Client has disconnected...\n");
-				exit_flag = 1;
+				exit = 1;
 				close(client);
 			}
 		}
@@ -218,7 +208,7 @@ void treat_special_client(int client) {
 	while (1) {
 		bzero(username, 100);	
 		strcpy(username, read_string_from_socket(client));
-		printf ("[server]: Administrator %s has connected\n", username);
+		
 
 		char password[100];
 		bzero(password, 100);	
@@ -229,6 +219,7 @@ void treat_special_client(int client) {
 		strcpy(encrypted_pass, crypt(password,"k7"));
 
 		if (check_credentials(db, username, encrypted_pass) == 1) {
+			printf ("[server]: Administrator %s has connected\n", username);
 			write_string_to_socket(client, "OK");
 			break;
 		}
@@ -236,41 +227,55 @@ void treat_special_client(int client) {
 	}
 
 	while (1) {
-		char path[100] = "./server_folder/file_from_";
-		strcat(path,username);
-		strcat(path,".csv");
-		FILE *fp;
-		fp = fopen(path, "w");
-		char file_line[1000];
-		while (1) {
-			bzero(file_line,1000);
-			strcpy(file_line,read_string_from_socket(client));
-			if (strcmp(file_line, "EOF") != 0) {
-				fputs(file_line, fp);
-			} else {
-				close(fp);
-				fflush(fp);
-				int rows_number = process_file_from_client(db, path, username);
-				if (rows_number == -1) {
-					printf("[server]: Invalid file format!\n");
-					write_string_to_socket(client, "The file you sent has an invalid format! Please check and retry.");
-				}
-				else {
+
+		char choice[10];
+		bzero(choice,10);
+		strcpy(choice, read_string_from_socket(client));
+		char confirmation[100];
+		bzero(confirmation,100);
+		
+		if (strcmp(choice, "1") == 0) {
+
+			char path[100] = "./server_folder/file_from_";
+			strcat(path,username);
+			strcat(path,".csv");
+			FILE *fp;
+			fp = fopen(path, "w");
+			char file_line[1000];
+			while (1) {
+				bzero(file_line,1000);
+				strcpy(file_line,read_string_from_socket(client));
+				if (strcmp(file_line, "EOF") != 0) {
+					fputs(file_line, fp);
+				} else {
+					close(fp);
+					fflush(fp);
+					int rows_number = process_file_from_client(db, path, username);
 					printf("[server]: %d rows have been successfully inserted into database!\n", rows_number);
-					write_string_to_socket(client, "Thank you for the updates!");
+					write_string_to_socket(client,"Thank you for the updates!");
+					break;
+					}
 				}
-				break;
 			}
+			else if (strcmp(choice, "2") == 0) {
+				char city[20];
+				bzero(city,20);
+				strcpy(city, read_string_from_socket(client));
+				delete_from_db(db, city);
+				printf("[server]: Rows with %s as city have been deleted!\n", city);
+				write_string_to_socket(client,"Your delete request has been executed!");
+				}	
+			else continue;
+			char* exit_msg;
+			exit_msg = read_string_from_socket(client);
+			if (strcmp(exit_msg, "N") == 0) {
+				printf ("[server]: Administrator %s has disconnected\n", username);
+				close(client);
+				break;
+			}	
 		}
-		char* exit_msg;
-		exit_msg = read_string_from_socket(client);
-		if (strcmp(exit_msg, "N") == 0) {
-			printf ("[server]: Administrator %s has disconnected\n", username);
-			close(client);
-			break;
-		}	
+		
 	}
-}
 
 int main ()
 {
@@ -299,7 +304,7 @@ int main ()
     	
 		/* we accept a client (blocking call) */
 		
-    	client = get_sd_of_accepted_connection(socket_descriptors, &which_sd, (struct sockaddr *) &from, &length);
+    	client = get_fd_of_accepted_connection(socket_descriptors, &which_sd, (struct sockaddr *) &from, &length);
     	if (client < 0)
     	{
     		perror ("Error at accept().\n");
