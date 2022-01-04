@@ -124,13 +124,13 @@ int init_server(int* first_sd, int* second_sd, struct sockaddr_in server, struct
 
 
     // listen for clients
-    if (listen (*first_sd, 1) == -1)
+    if (listen (*first_sd, 5) == -1)
     {
     	perror ("[server]Eroare la listen().\n");
     	return errno;
     }
 
-	if (listen(*second_sd, 1) == -1) 
+	if (listen(*second_sd, 5) == -1) 
 	{
 		perror ("[server]Eroare la listen() 2.\n");
 		return errno;
