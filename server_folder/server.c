@@ -328,9 +328,6 @@ int main ()
 				fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
 				return(0);
 			} 
-			else {
-			fprintf(stderr, "Opened database successfully\n");
-			}
 
     		/* s-a realizat conexiunea, se astepta mesajul */
     	

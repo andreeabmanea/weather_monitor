@@ -174,28 +174,35 @@ int main (int argc, char *argv[])
         scanf("%s", path);
         strcat(full_path, "./client_folder/");
         strcat(full_path, path);
-        fp = fopen(full_path, "r");
-        char* line;
-        size_t len = 0;
-        ssize_t read;
-        while ((read = getline(&line, &len, fp)) != -1) {
-          write_string_to_socket(sd,line);
-        }
-        write_string_to_socket(sd,"EOF");
-      }
-      else if (strcmp(choice,"2")==0) {
-        printf("Enter a city for which to delete the records\n");
-        char city[20];
-        bzero(city,20);
-        scanf("%s", city);
-        write_string_to_socket(sd,city);
-      }
-      else {
-          printf("\nInvalid command! Try again!\n");
-          printf("\n");
+        if (access(full_path, F_OK) == 0) {
+          fp = fopen(full_path, "r");
+          char* line;
+          size_t len = 0;
+          ssize_t read;
+          while ((read = getline(&line, &len, fp)) != -1) {
+            write_string_to_socket(sd,line);
+            }
+          write_string_to_socket(sd,"EOF");
+          }
+          else {
+          printf("\nThe file doesn't exist! Please try again!\n");
           continue;
           }
+        }
+        else if (strcmp(choice,"2")==0) {
+          printf("Enter a city for which to delete the records\n");
+          char city[20];
+          bzero(city,20);
+          scanf("%s", city);
+          write_string_to_socket(sd,city);
+        }
+        else {
+            printf("\nInvalid command! Try again!\n");
+            printf("\n");
+            continue;
+            }
 
+      
       char confirmation[100];
       bzero(confirmation, 100);
       fflush(stdout);
@@ -217,6 +224,5 @@ int main (int argc, char *argv[])
         close(sd);
         break;
       }
-      
     }
   }

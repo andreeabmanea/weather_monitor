@@ -194,6 +194,7 @@ void delete_from_db(sqlite3 *db, char* city) {
       return;
    }
    result = sqlite3_step(stmt);
+   sqlite3_finalize(stmt);
 }
 
 char* select_weather_forecast(sqlite3 *db, char* city, char* calendar_date) {
