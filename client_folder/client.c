@@ -185,8 +185,9 @@ int main (int argc, char *argv[])
           write_string_to_socket(sd,"EOF");
           }
           else {
-          printf("\nThe file doesn't exist! Please try again!\n");
-          continue;
+            printf("\nThe file doesn't exist! Please try again!\n");
+            printf("\n");
+            continue;
           }
         }
         else if (strcmp(choice,"2")==0) {
