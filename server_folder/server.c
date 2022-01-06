@@ -19,7 +19,6 @@ sqlite3 *db;
 char* read_string_from_socket(int sd) {
   int message_length;
   static char buffer[100];
-
   read(sd, &message_length, sizeof(int));
   read(sd, buffer, message_length);
 
@@ -28,18 +27,16 @@ char* read_string_from_socket(int sd) {
 
 void write_string_to_socket(int sd, char* message) {
     int message_length= strlen(message) + 1;
-    /* trimiterea mesajului la server */
     write(sd, &message_length, sizeof(int));
     write(sd, message, message_length);
 }
 
-
-
 int get_fd_of_accepted_connection(int file_descriptors[], int* which_sd, struct sockaddr *addr, socklen_t *addrlen) {
-    
+    // this function was adapted from an answer from the following link: https://stackoverflow.com/questions/15560336/listen-to-multiple-ports-from-one-server/15560580
+	
 	int maxfd = -1, fd = -1;
     unsigned int i;
-    int result; // return of select
+    int result;
 	
 	fd_set readfds;
 	FD_ZERO(&readfds);
@@ -242,6 +239,7 @@ void treat_special_client(int client) {
 			FILE *fp;
 			fp = fopen(path, "w");
 			char file_line[1000];
+			bzero(file_line,1000);
 			while (1) {
 				bzero(file_line,1000);
 				strcpy(file_line,read_string_from_socket(client));

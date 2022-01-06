@@ -25,63 +25,10 @@ char* read_string_from_socket(int sd) {
 void write_string_to_socket(int sd, char* message) {
   if (recv(sd, NULL, 1, MSG_PEEK | MSG_DONTWAIT) != 0) {
     int message_length= strlen(message) + 1;
-    /* trimiterea mesajului la server */
     write(sd, &message_length, sizeof(int));
     write(sd, message, message_length);
   }
 }
-/* portul de conectare la server*/
-int port;
-
-int main (int argc, char *argv[])
-{
-  int sd;			// descriptorul de socket
-  struct sockaddr_in server;	// structura folosita pentru conectare 
-
-  /* exista toate argumentele in linia de comanda? */
-  if (argc != 3)
-    {
-      printf ("Sintaxa: %s <adresa_server> <port>\n", argv[0]);
-      return -1;
-    }
-
-  /* stabilim portul */
-  port = atoi (argv[2]);
-
-  /* cream socketul */
-  if ((sd = socket (AF_INET, SOCK_STREAM, 0)) == -1)
-    {
-      perror ("Eroare la socket().\n");
-      return errno;
-    }
-
-  /* umplem structura folosita pentru realizarea conexiunii cu serverul */
-  /* familia socket-ului */
-  server.sin_family = AF_INET;
-  /* adresa IP a serverului */
-  server.sin_addr.s_addr = inet_addr(argv[1]);
-  /* portul de conectare */
-  server.sin_port = htons (port);
-  
-  /* ne conectam la server */
-  if (connect (sd, (struct sockaddr *) &server,sizeof (struct sockaddr)) == -1)
-    {
-      perror ("[client]Eroare la connect().\n");
-      return errno;
-    }
-
-  /* citirea mesajului */
-  switch (port) {
-    case 2028:
-      regular_client(sd);
-      break;
-    case 2029: 
-      special_client(sd);
-      break;
-    default: 
-      printf("Unknown port");
-  }
-  }
 
   void regular_client(int sd) {
     while (1) {
@@ -127,6 +74,7 @@ int main (int argc, char *argv[])
   }
 
   void special_client(int sd) {
+  
     while(1) {
       char username[100];
       bzero(username, 100);
@@ -185,6 +133,7 @@ int main (int argc, char *argv[])
           write_string_to_socket(sd,"EOF");
           }
           else {
+            close(fp);
             printf("\nThe file doesn't exist! Please try again!\n");
             printf("\n");
             continue;
@@ -225,5 +174,58 @@ int main (int argc, char *argv[])
         close(sd);
         break;
       }
+    }
+  }
+
+  /* portul de conectare la server*/
+int port;
+
+int main (int argc, char *argv[])
+{
+  int sd;			// descriptorul de socket
+  struct sockaddr_in server;	// structura folosita pentru conectare 
+
+  /* exista toate argumentele in linia de comanda? */
+  if (argc != 3)
+    {
+      printf ("Sintaxa: %s <adresa_server> <port>\n", argv[0]);
+      return -1;
+    }
+
+  /* stabilim portul */
+  port = atoi (argv[2]);
+
+  /* cream socketul */
+  if ((sd = socket (AF_INET, SOCK_STREAM, 0)) == -1)
+    {
+      perror ("Eroare la socket().\n");
+      return errno;
+    }
+
+  /* umplem structura folosita pentru realizarea conexiunii cu serverul */
+  /* familia socket-ului */
+  server.sin_family = AF_INET;
+  /* adresa IP a serverului */
+  server.sin_addr.s_addr = inet_addr(argv[1]);
+  /* portul de conectare */
+  server.sin_port = htons (port);
+  
+  /* ne conectam la server */
+  if (connect (sd, (struct sockaddr *) &server,sizeof (struct sockaddr)) == -1)
+    {
+      perror ("[client]Eroare la connect().\n");
+      return errno;
+    }
+
+  /* citirea mesajului */
+  switch (port) {
+    case 2028:
+      regular_client(sd);
+      break;
+    case 2029: 
+      special_client(sd);
+      break;
+    default: 
+      printf("Unknown port");
     }
   }
